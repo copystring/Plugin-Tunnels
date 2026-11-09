@@ -1,0 +1,55 @@
+name: Check provider views proposal
+on:
+  push:
+    branches: [work/provider-view-checks]
+    paths: [.github/workflows/provider-view-checks.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: provider-views-check
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      HUSKY: "0"
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8befd704501baf7c49299a0bd52bb49c2dc2b7fa
+          persist-credentials: false
+      - name: Use a feature workspace on the runner
+        run: git switch -c ci/provider-views
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check proposal formatting
+        run: |
+          npx prettier --write src/frontend/TunnelsHome.tsx src/frontend/index.tsx src/frontend/TunnelViewContainer.tsx src/frontend/tunnel-views.ts tests/frontend/activate.test.tsx tests/frontend/tunnels-home.test.tsx docs/provider-views.md CONTRIBUTING.md
+          if ! git diff --quiet; then
+            echo "BEGIN_PROVIDER_FORMAT_PATCH_BASE64"
+            git diff --binary | base64 -w 120
+            echo "END_PROVIDER_FORMAT_PATCH_BASE64"
+            echo "::error::Apply the formatter output to the proposal branch."
+            exit 1
+          fi
+      - name: Run the complete test suite
+        run: npx vitest run --maxWorkers=2
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Validate
+        run: npm run validate
+      - name: Pack
+        run: npx termix-plugin pack --out release
+      - name: Record tested source
+        if: always()
+        run: |
+          echo 'Tested proposal: 8befd704501baf7c49299a0bd52bb49c2dc2b7fa' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Upstream base: 02213582c8835c943665283514ff9084ec2e26be' >> "$GITHUB_STEP_SUMMARY"
