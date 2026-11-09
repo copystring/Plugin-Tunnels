@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 8befd704501baf7c49299a0bd52bb49c2dc2b7fa
+          ref: 5ea75765662e565851134d13541f1e289d4e0b97
           persist-credentials: false
       - name: Use a feature workspace on the runner
         run: git switch -c ci/provider-views
@@ -51,5 +51,5 @@ jobs:
       - name: Record tested source
         if: always()
         run: |
-          echo 'Tested proposal: 8befd704501baf7c49299a0bd52bb49c2dc2b7fa' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Tested proposal: 5ea75765662e565851134d13541f1e289d4e0b97' >> "$GITHUB_STEP_SUMMARY"
           echo 'Upstream base: 02213582c8835c943665283514ff9084ec2e26be' >> "$GITHUB_STEP_SUMMARY"
